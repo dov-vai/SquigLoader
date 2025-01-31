@@ -7,6 +7,8 @@
 // @match        https://*.squig.link/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=squig.link
 // @grant        none
+// @updateURL    https://github.com/dov-vai/SquigLoader/raw/refs/heads/main/SquigLoader.user.js
+// @downloadURL  https://github.com/dov-vai/SquigLoader/raw/refs/heads/main/SquigLoader.user.js
 // ==/UserScript==
 
 (function() {
