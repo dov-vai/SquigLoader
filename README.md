@@ -8,6 +8,7 @@ This is a userscript. A browser extension that can load them is neccessary.
 I recommend Tampermonkey:
 - [Firefox](https://addons.mozilla.org/en-US/firefox/addon/tampermonkey/)
 - [Chromium](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo)
+- [Kiwi Browser](https://chromewebstore.google.com/detail/tampermonkey-legacy/lcmhijbkigalmkeommnijlpobloojgfn) (Tampermonkey Legacy, version, as there's [a bug](https://github.com/Tampermonkey/tampermonkey/issues/2055#issuecomment-2225438775) in Kiwi Browser)
 
 Then click [here](https://github.com/dov-vai/SquigLoader/raw/refs/heads/main/SquigLoader.user.js) to install.
 
