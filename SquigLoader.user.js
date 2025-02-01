@@ -5,6 +5,7 @@
 // @description  Load any squig.link measurement from other reviewers on the same graph.
 // @author       dov-vai
 // @match        https://*.squig.link/*
+// @match        https://graph.hangout.audio/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=squig.link
 // @grant        none
 // @updateURL    https://github.com/dov-vai/SquigLoader/raw/refs/heads/main/SquigLoader.user.js
@@ -17,13 +18,20 @@
         const addButton = document.createElement('button');
         addButton.textContent = '+';
         addButton.classList.add('add-phone-button');
+        let buttonColor = "var(--background-color-contrast-more)"
+
+        // fix for crinacle's site, because the button is invisible
+         if (window.location.href.startsWith("https://graph.hangout.audio/")) {
+             buttonColor = "var(--background-color-contrast)"
+         }
+
         addButton.style.cssText = `
     margin-right: 10px;
     font-size: 24px;
     border-radius: 50%;
-    color: var(--background-color-contrast-more);
+    color: ${buttonColor};
     background-color: transparent;
-    border: 1px solid var(--background-color-contrast-more);
+    border: 1px solid ${buttonColor};
     cursor: pointer;
     width: 32px;
     height: 32px;
