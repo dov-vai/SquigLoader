@@ -24,5 +24,21 @@ The measurements are separated between reviewers because all of them have varyin
 
 I choose to be stupid, and think it's still a good utility for referencing several frequency responses. Just take it with a grain of salt.
 
+# Issues
+Some sites will outright not load:
+- Some subdomains do not allow [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)
+- Some have encrypted files ([hangout.audio](https://graph.hangout.audio/)).
+
+As a workaround, you can visit them directly and use SquigLoader from there. 
+
+The script should continue working with less restrictions.
+
+## Headphones
+Headphone squig.link sites have a hardcoded feature in them that let's you view multiple measurements of the same headphone.
+
+IEM-only sites restrict that. So only one will be viewable.
+
+The loader tries to load multiple measurements, but they will only be viewable from the headphone sites.
+
 # Not working?
 Perhaps the site has updated and I just haven't visited squig.link recently. Feel free to open an issue so I get a reminder.
