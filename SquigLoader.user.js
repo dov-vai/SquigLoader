@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SquigLoader
 // @namespace    SquigLoader
-// @version      1.0.0
+// @version      1.0.1
 // @description  Load any squig.link measurement from other reviewers on the same graph.
 // @author       dov-vai
 // @match        https://*.squig.link/*
