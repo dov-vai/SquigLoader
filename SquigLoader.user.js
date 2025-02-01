@@ -87,8 +87,9 @@
             return; // do nothing if data is already loaded
         }
 
-        const channelFiles = {};
+        const channelFiles = [];
         const promises = [];
+        const retryPromises = [];
 
         fileNames.forEach(fileName => {
             fileName = fileName.replace(/_/g, " ");
@@ -105,10 +106,37 @@
                     return response.text();
                 })
                 .then(data => {
-                    channelFiles[`${fileName} ${channel}`] = data;
+                    channelFiles.push(data);
                 })
                 .catch(error => {
                     console.error('Error fetching data for', fullFileName, error);
+
+                    // many headphone squigs rely on a few measurements to get a more accurate average
+                    // and a number is included in the link, so let's try fetching them
+                    if (!siteUrl.toLowerCase().includes("/headphones/")){
+                        return;
+                    }
+
+                    for (let i = 1; i <= 6; i++){
+                        const fullFileName = `${fileName} ${channel}${i}.txt`;
+                        const dataUrl = `${siteUrl}data/${encodeURIComponent(fullFileName)}`;
+
+                        const promise = fetch(dataUrl)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            }
+                            return response.text();
+                        })
+                        .then(data => {
+                            channelFiles.push(data);
+                        })
+                        .catch(error => {
+                            console.error('Error fetching data for', fullFileName, error);
+                        });
+
+                        retryPromises.push(promise);
+                    }
                 });
 
                 promises.push(promise);
@@ -116,10 +144,11 @@
         });
 
         await Promise.all(promises);
+        await Promise.all(retryPromises);
 
-        phoneObj.rawChannels = Object.entries(channelFiles).map(([key, value]) => {
-            if (value) {
-                const parsedData = tsvParse(value);
+        phoneObj.rawChannels = channelFiles.map(data => {
+            if (data) {
+                const parsedData = tsvParse(data);
                 return Equalizer.interp(f_values, parsedData);
             } else {
                 return null;
