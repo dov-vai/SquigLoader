@@ -14,7 +14,8 @@
 
 (function() {
     'use strict';
-    function addShowPhoneButton(fauxnItem) {
+
+    function createAddButton(){
         const addButton = document.createElement('button');
         addButton.textContent = '+';
         addButton.classList.add('add-phone-button');
@@ -39,7 +40,12 @@
     justify-content: center;
     align-items: center;
 `;
+        return addButton;
+    }
 
+
+    function addShowPhoneButton(fauxnItem) {
+        const addButton = createAddButton()
         fauxnItem.appendChild(addButton);
 
         addButton.addEventListener('click', async (event) => {
@@ -57,7 +63,6 @@
                 phone: phoneName,
                 dispName: phoneName,
                 fullName: brandName + " " + phoneName,
-                isDynamic: true,
                 rawChannels: null,
             };
 
@@ -67,7 +72,7 @@
                 );
 
                 if (phoneIndex === -1) {
-                    await externalLoadFiles(phoneObj, siteUrl, fileNames);
+                    await loadExternalFiles(phoneObj, siteUrl, fileNames);
                     allPhones.push(phoneObj);
                     showPhone(phoneObj, false);
                     return;
@@ -81,7 +86,18 @@
         });
     }
 
-    async function externalLoadFiles(phoneObj, siteUrl, fileNames) {
+    function interpolateData(channelFiles) {
+        return channelFiles.map(data => {
+            if (data) {
+                const parsedData = tsvParse(data);
+                return Equalizer.interp(f_values, parsedData);
+            } else {
+                return null;
+            }
+        }).filter(channel => channel !== null);
+    }
+
+    async function loadExternalFiles(phoneObj, siteUrl, fileNames) {
         if (phoneObj.rawChannels) {
             console.log("Data already loaded for:", phoneObj.dispName);
             return; // do nothing if data is already loaded
@@ -146,14 +162,7 @@
         await Promise.all(promises);
         await Promise.all(retryPromises);
 
-        phoneObj.rawChannels = channelFiles.map(data => {
-            if (data) {
-                const parsedData = tsvParse(data);
-                return Equalizer.interp(f_values, parsedData);
-            } else {
-                return null;
-            }
-        }).filter(channel => channel !== null);
+        phoneObj.rawChannels = interpolateData(channelFiles);
     }
 
     // watch for changes in div#phones
