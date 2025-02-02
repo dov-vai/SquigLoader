@@ -74,16 +74,31 @@
                 if (phoneIndex === -1) {
                     await loadExternalFiles(phoneObj, siteUrl, fileNames);
                     allPhones.push(phoneObj);
-                    showPhone(phoneObj, false);
+                    handleShowPhone(phoneObj, false);
+                    addButton.textContent = '–';
                     return;
                 }
                 // if it exists, reference the already created phoneObj
                 phoneObj = allPhones[phoneIndex];
-                phoneObj.active ? removePhone(phoneObj) : showPhone(phoneObj, false);
+                phoneObj.active ? removePhone(phoneObj) : handleShowPhone(phoneObj, false);
+                addButton.textContent = phoneObj.active ? '-' : '+';
             } catch (error) {
                 console.error('Error loading data for', phoneName, error);
             }
         });
+    }
+
+    function handleShowPhone(p, exclusive, suppressVariant, trigger){
+        try {
+            showPhone(p, exclusive, suppressVariant, trigger);
+        } catch (error) {
+            // ignore this error, showPhone handles list view updating too, however it's not needed for us and causes this error
+            if (error instanceof TypeError && error.message.includes("phoneListItem is null")) {
+                console.warn("Ignoring TypeError: phoneListItem is null");
+            } else {
+                throw error;
+            }
+        }
     }
 
     function interpolateData(channelFiles) {
