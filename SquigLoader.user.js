@@ -112,6 +112,23 @@
         }).filter(channel => channel !== null);
     }
 
+    function fetchFile(url, channelFiles, fileName){
+        return fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.text();
+        })
+        .then(data => {
+            channelFiles.push(data);
+        })
+        .catch(error => {
+            console.error('Error fetching data for', fileName, error);
+            throw error;
+        })
+    }
+
     async function loadExternalFiles(phoneObj, siteUrl, fileNames) {
         if (phoneObj.rawChannels) {
             console.log("Data already loaded for:", phoneObj.dispName);
@@ -129,19 +146,8 @@
                 const fullFileName = `${fileName} ${channel}.txt`;
                 const dataUrl = `${siteUrl}data/${encodeURIComponent(fullFileName)}`;
 
-                const promise = fetch(dataUrl)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.text();
-                })
-                .then(data => {
-                    channelFiles.push(data);
-                })
-                .catch(error => {
-                    console.error('Error fetching data for', fullFileName, error);
-
+                const promise = fetchFile(dataUrl, channelFiles, fullFileName)
+                .catch(_ => {
                     // many headphone squigs rely on a few measurements to get a more accurate average
                     // and a number is included in the link, so let's try fetching them
                     if (!siteUrl.toLowerCase().includes("/headphones/")){
@@ -152,19 +158,10 @@
                         const fullFileName = `${fileName} ${channel}${i}.txt`;
                         const dataUrl = `${siteUrl}data/${encodeURIComponent(fullFileName)}`;
 
-                        const promise = fetch(dataUrl)
-                        .then(response => {
-                            if (!response.ok) {
-                                throw new Error(`HTTP error! status: ${response.status}`);
-                            }
-                            return response.text();
-                        })
-                        .then(data => {
-                            channelFiles.push(data);
-                        })
-                        .catch(error => {
-                            console.error('Error fetching data for', fullFileName, error);
-                        });
+                        const promise = fetchFile(dataUrl, channelFiles, fullFileName)
+                        // we don't care if other requests after it fail, because the number of measurements is not strict
+                        // 6 is the largest i've seen
+                        .catch(_ => {});
 
                         retryPromises.push(promise);
                     }
