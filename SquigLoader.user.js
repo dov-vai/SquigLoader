@@ -43,19 +43,54 @@
         return addButton;
     }
 
+    function addFauxnItemsToParent(fauxnItem, siteUrl, files) {
+        const parent = fauxnItem.parentNode;
+        const linksContainer = document.createElement('div');
 
-    function addShowPhoneButton(fauxnItem) {
+        files.forEach(file => {
+            const newFauxnItem = fauxnItem.cloneNode(true);
+            
+            const brand = fauxnItem.getAttribute('name').split(': ')[0];
+            newFauxnItem.setAttribute('name', `${brand}: ${file}`);
+
+            // remove the old cloned button
+            const button = newFauxnItem.querySelector('button.add-phone-button');
+            newFauxnItem.removeChild(button);
+
+            const newFauxnLink = newFauxnItem.querySelector('a.fauxn-link');
+            newFauxnLink.href = `${siteUrl}?share=${file.replace(/ /g, "_")}`;
+            newFauxnLink.textContent = file;
+
+            addShowPhoneButton(newFauxnItem, true);
+            linksContainer.appendChild(newFauxnItem);
+        });
+
+        parent.appendChild(linksContainer);
+    }
+
+    function addShowPhoneButton(fauxnItem, phoneBookLoaded) {
         const addButton = createAddButton()
         fauxnItem.appendChild(addButton);
+
+        const [brandName, phoneName] = fauxnItem.getAttribute('name').split(': ').map(s => s.trim());
+        const fauxnLink = fauxnItem.querySelector('a.fauxn-link');
+        const siteUrl = fauxnLink.href.split('/?share=')[0] + '/';
+        const fileName = fauxnLink.href.split('/?share=')[1].replace(/_/g, " ");
 
         addButton.addEventListener('click', async (event) => {
             event.preventDefault();
             event.stopPropagation();
 
-            const [brandName, phoneName] = fauxnItem.getAttribute('name').split(': ').map(s => s.trim());
-            const fauxnLink = fauxnItem.querySelector('a.fauxn-link');
-            const siteUrl = fauxnLink.href.split('/?share=')[0] + '/';
-            const fileNames = fauxnLink.href.split('/?share=')[1].split(',');
+            if (!phoneBookLoaded){
+                findFilesInPhoneBook(siteUrl, fileName)
+                .then(files => {
+                    files = files.filter(file => file != fileName);
+                    if (files.length > 0) {
+                        addFauxnItemsToParent(fauxnItem, siteUrl, files);
+                    }
+                    phoneBookLoaded = true;
+                });
+            }
 
             let phoneObj = {
                 brand: brandName,
@@ -67,12 +102,12 @@
             };
 
             try {
-                let phoneIndex = allPhones.findIndex(
+                const phoneIndex = allPhones.findIndex(
                     p => p.dispBrand === phoneObj.dispBrand && p.dispName === phoneObj.dispName
                 );
 
                 if (phoneIndex === -1) {
-                    await loadExternalFiles(phoneObj, siteUrl, fileNames);
+                    await loadExternalFile(phoneObj, siteUrl, fileName);
                     allPhones.push(phoneObj);
                     handleShowPhone(phoneObj, false);
                     addButton.textContent = '–';
@@ -129,7 +164,40 @@
         })
     }
 
-    async function loadExternalFiles(phoneObj, siteUrl, fileNames) {
+    async function findFilesInPhoneBook(siteUrl, fileName) {
+        const phoneBookUrl = `${siteUrl}data/phone_book.json`;
+      
+        try {
+          const response = await fetch(phoneBookUrl);
+      
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+      
+          const phoneBook = await response.json();
+      
+          for (const entry of phoneBook){
+            for (const phone of entry.phones){
+                if (phone.file instanceof Array){
+                    if (phone.file.includes(fileName)){
+                        return phone.file;
+                    }
+                } else {
+                    if (phone.file === fileName){
+                        return [ phone.file ];
+                    }
+                }
+            }
+          }
+      
+          return [];
+        } catch (error) {
+          console.error('Error fetching or parsing phone_book.json:', error);
+          return [];
+        }
+    }
+
+    async function loadExternalFile(phoneObj, siteUrl, fileName) {
         if (phoneObj.rawChannels) {
             console.log("Data already loaded for:", phoneObj.dispName);
             return; // do nothing if data is already loaded
@@ -139,37 +207,33 @@
         const promises = [];
         const retryPromises = [];
 
-        fileNames.forEach(fileName => {
-            fileName = fileName.replace(/_/g, " ");
+        for (const channel of ["L", "R"]) {
+            const fullFileName = `${fileName} ${channel}.txt`;
+            const dataUrl = `${siteUrl}data/${encodeURIComponent(fullFileName)}`;
 
-            for (const channel of ["L", "R"]) {
-                const fullFileName = `${fileName} ${channel}.txt`;
-                const dataUrl = `${siteUrl}data/${encodeURIComponent(fullFileName)}`;
+            const promise = fetchFile(dataUrl, channelFiles, fullFileName)
+            .catch(_ => {
+                // many headphone squigs rely on a few measurements to get a more accurate average
+                // and a number is included in the link, so let's try fetching them
+                if (!siteUrl.toLowerCase().includes("/headphones/")){
+                    return;
+                }
 
-                const promise = fetchFile(dataUrl, channelFiles, fullFileName)
-                .catch(_ => {
-                    // many headphone squigs rely on a few measurements to get a more accurate average
-                    // and a number is included in the link, so let's try fetching them
-                    if (!siteUrl.toLowerCase().includes("/headphones/")){
-                        return;
-                    }
+                for (let i = 1; i <= 6; i++){
+                    const fullFileName = `${fileName} ${channel}${i}.txt`;
+                    const dataUrl = `${siteUrl}data/${encodeURIComponent(fullFileName)}`;
 
-                    for (let i = 1; i <= 6; i++){
-                        const fullFileName = `${fileName} ${channel}${i}.txt`;
-                        const dataUrl = `${siteUrl}data/${encodeURIComponent(fullFileName)}`;
+                    const promise = fetchFile(dataUrl, channelFiles, fullFileName)
+                    // we don't care if other requests after it fail, because the number of measurements is not strict
+                    // 6 is the largest i've seen
+                    .catch(_ => {});
 
-                        const promise = fetchFile(dataUrl, channelFiles, fullFileName)
-                        // we don't care if other requests after it fail, because the number of measurements is not strict
-                        // 6 is the largest i've seen
-                        .catch(_ => {});
+                    retryPromises.push(promise);
+                }
+            });
 
-                        retryPromises.push(promise);
-                    }
-                });
-
-                promises.push(promise);
-            }
-        });
+            promises.push(promise);
+        }
 
         await Promise.all(promises);
         await Promise.all(retryPromises);
@@ -183,7 +247,7 @@
             if (mutation.type === 'childList') {
                 mutation.addedNodes.forEach(node => {
                     if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains('fauxn-item')) {
-                        addShowPhoneButton(node);
+                        addShowPhoneButton(node, false);
                     }
                 });
             }
