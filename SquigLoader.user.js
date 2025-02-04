@@ -15,18 +15,25 @@
 (function() {
     'use strict';
 
-    function createAddButton(){
-        const addButton = document.createElement('button');
-        addButton.textContent = '+';
-        addButton.classList.add('add-phone-button');
-        let buttonColor = "var(--background-color-contrast-more)"
+    const ADD_BUTTON_CLASS = "add-phone-button";
+    const BUTTON_COLOR = "var(--background-color-contrast-more)";
+    const ALT_BUTTON_COLOR = "var(--background-color-contrast)";
+    const EXPANDED_CONTAINER_COLOR = "rgba(0, 0, 0, 0.1)";
+    const ADD_SYMBOL = "+";
+    const REMOVE_SYMBOL = "-";
+    const EXPAND_SYMBOL = "▲";
+    const HIDE_SYMBOL = "▼";
 
+    function createListButton(){
+        const button = document.createElement('button');
+
+        let buttonColor = BUTTON_COLOR;
         // fix for crinacle's site, because the button is invisible
          if (window.location.href.startsWith("https://graph.hangout.audio/")) {
-             buttonColor = "var(--background-color-contrast)"
+             buttonColor = ALT_BUTTON_COLOR;
          }
 
-        addButton.style.cssText = `
+        button.style.cssText = `
     margin-right: 10px;
     font-size: 24px;
     border-radius: 50%;
@@ -40,21 +47,50 @@
     justify-content: center;
     align-items: center;
 `;
+        return button;
+    }
+
+    function createAddButton(){
+        const addButton = createListButton();
+        addButton.textContent = ADD_SYMBOL;
+        addButton.classList.add(ADD_BUTTON_CLASS);
         return addButton;
     }
 
+    function createExpandButton(){
+        const expandButton = createListButton();
+        expandButton.textContent = EXPAND_SYMBOL;
+        expandButton.classList.add("expand-phones-button");
+        expandButton.style.fontSize = "12px";
+        return expandButton;
+    }
+
     function addFauxnItemsToParent(fauxnItem, siteUrl, files) {
+        const clonedItem = fauxnItem.cloneNode(true);
         const parent = fauxnItem.parentNode;
+
         const linksContainer = document.createElement('div');
+        linksContainer.style.display = 'none';
+        linksContainer.style.backgroundColor = EXPANDED_CONTAINER_COLOR;
+
+        const expandButton = createExpandButton();
+        fauxnItem.appendChild(expandButton);
+
+        let expanded = false;
+        expandButton.addEventListener('click', async (event) => {
+            linksContainer.style.display = expanded ? 'none' : 'block';
+            expandButton.textContent = expanded ? EXPAND_SYMBOL : HIDE_SYMBOL;
+            expanded = !expanded;
+        });
 
         files.forEach(file => {
-            const newFauxnItem = fauxnItem.cloneNode(true);
+            const newFauxnItem = clonedItem.cloneNode(true);
             
             const brand = fauxnItem.getAttribute('name').split(': ')[0];
             newFauxnItem.setAttribute('name', `${brand}: ${file}`);
 
             // remove the old cloned button
-            const button = newFauxnItem.querySelector('button.add-phone-button');
+            const button = newFauxnItem.querySelector(`button.${ADD_BUTTON_CLASS}`);
             newFauxnItem.removeChild(button);
 
             const newFauxnLink = newFauxnItem.querySelector('a.fauxn-link');
@@ -116,7 +152,7 @@
                 // if it exists, reference the already created phoneObj
                 phoneObj = allPhones[phoneIndex];
                 phoneObj.active ? removePhone(phoneObj) : handleShowPhone(phoneObj, false);
-                addButton.textContent = phoneObj.active ? '-' : '+';
+                addButton.textContent = phoneObj.active ? REMOVE_SYMBOL : ADD_SYMBOL;
             } catch (error) {
                 console.error('Error loading data for', phoneName, error);
             }
