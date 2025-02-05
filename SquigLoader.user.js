@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SquigLoader
 // @namespace    SquigLoader
-// @version      1.0.1
+// @version      1.0.2
 // @description  Load any squig.link measurement from other reviewers on the same graph.
 // @author       dov-vai
 // @match        https://*.squig.link/*
@@ -15,7 +15,7 @@
 (function() {
     'use strict';
 
-        const ADD_BUTTON_CLASS = "add-phone-button";
+    const ADD_BUTTON_CLASS = "add-phone-button";
     const BUTTON_COLOR = "var(--background-color-contrast-more)";
     const ALT_BUTTON_COLOR = "var(--background-color-contrast)";
     const EXPANDED_CONTAINER_COLOR = "rgba(0, 0, 0, 0.1)";
