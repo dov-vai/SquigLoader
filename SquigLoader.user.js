@@ -15,7 +15,7 @@
 (function() {
     'use strict';
 
-    const ADD_BUTTON_CLASS = "add-phone-button";
+        const ADD_BUTTON_CLASS = "add-phone-button";
     const BUTTON_COLOR = "var(--background-color-contrast-more)";
     const ALT_BUTTON_COLOR = "var(--background-color-contrast)";
     const EXPANDED_CONTAINER_COLOR = "rgba(0, 0, 0, 0.1)";
@@ -101,7 +101,7 @@
             linksContainer.appendChild(newFauxnItem);
         });
 
-        parent.appendChild(linksContainer);
+        parent.insertBefore(linksContainer, fauxnItem.nextSibling);
     }
 
     function addShowPhoneButton(fauxnItem, phoneBookLoaded) {
