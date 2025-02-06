@@ -23,6 +23,7 @@
     const REMOVE_SYMBOL = "-";
     const EXPAND_SYMBOL = "▲";
     const HIDE_SYMBOL = "▼";
+    const WARNING_SYMBOL = "!";
 
     function createListButton(){
         const button = document.createElement('button');
@@ -155,6 +156,7 @@
                 addButton.textContent = phoneObj.active ? REMOVE_SYMBOL : ADD_SYMBOL;
             } catch (error) {
                 console.error('Error loading data for', phoneName, error);
+                addButton.textContent = WARNING_SYMBOL;
             }
         });
     }
