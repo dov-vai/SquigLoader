@@ -128,15 +128,24 @@
                     phoneBookLoaded = true;
                 });
             }
-
+            
             let phoneObj = {
-                brand: brandName,
+                brand: null,
                 dispBrand: brandName,
                 phone: phoneName,
                 dispName: phoneName,
                 fullName: brandName + " " + phoneName,
                 rawChannels: null,
             };
+
+            let brandObj = {
+                active: false,
+                name: brandName,
+                phoneObjs: [phoneObj],
+                phones: [],
+            };
+
+            phoneObj.brand = brandObj;
 
             try {
                 const phoneIndex = allPhones.findIndex(
