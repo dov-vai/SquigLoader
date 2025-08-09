@@ -5,7 +5,6 @@
 // @description  Load any squig.link measurement from other reviewers on the same graph.
 // @author       dov-vai
 // @match        https://*.squig.link/*
-// @match        https://graph.hangout.audio/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=squig.link
 // @grant        GM_xmlhttpRequest
 // @connect      squig.link
