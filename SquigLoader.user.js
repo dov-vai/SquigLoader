@@ -258,6 +258,20 @@
     });
   }
 
+  // consistency is hard :(
+  function fixupUrl(url) {
+    const matchers = {
+      'silicagel': (url) => url.replace('/data/', '/data/phones/'),
+      '/hana/': (url) => url.replace('/data/', '/data/measurements/'),
+    };
+
+    const match = Object.keys(matchers).find((key) => url.includes(key));
+    if (match) {
+      return matchers[match](url);
+    }
+    return url;
+  }
+
   function fetchFile(url, channelFiles, fileName) {
     if (url.includes('graph.hangout.audio')) {
       const filePath = extractPathFromUrl(url);
@@ -269,7 +283,7 @@
     return new Promise((resolve, reject) => {
       GM_xmlhttpRequest({
         method: 'GET',
-        url: url,
+        url: fixupUrl(url),
         onload: function (response) {
           if (response.status >= 200 && response.status < 300) {
             channelFiles.push(response.responseText);
@@ -331,21 +345,26 @@
 
     for (const channel of ['L', 'R']) {
       const fullFileName = `${fileName} ${channel}.txt`;
-      const dataUrl = `${siteUrl}data/${encodeURIComponent(fullFileName)}`;
+      const dataUrl = `${siteUrl}data/${fullFileName}`;
 
       const promise = fetchFile(dataUrl, channelFiles, fullFileName).catch(
         (_) => {
           // many headphone squigs rely on a few measurements to get a more accurate average
           // and a number is included in the link, so let's try fetching them
-          if (!siteUrl.toLowerCase().includes('/headphones/')) {
+          const matchers = [
+            '/headphones/',
+            'zerostresslevel',
+            'ish.',
+            'listener.',
+          ];
+          const lowerUrl = siteUrl.toLowerCase();
+          if (!matchers.some((matcher) => lowerUrl.includes(matcher))) {
             return;
           }
 
           for (let i = 1; i <= 6; i++) {
             const fullFileName = `${fileName} ${channel}${i}.txt`;
-            const dataUrl = `${siteUrl}data/${encodeURIComponent(
-              fullFileName
-            )}`;
+            const dataUrl = `${siteUrl}data/${fullFileName}`;
 
             const promise = fetchFile(dataUrl, channelFiles, fullFileName)
               // we don't care if other requests after it fail, because the number of measurements is not strict
