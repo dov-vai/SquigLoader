@@ -12,6 +12,8 @@
 // @connect      graph.hangout.audio
 // @updateURL    https://github.com/dov-vai/SquigLoader/raw/refs/heads/main/SquigLoader.user.js
 // @downloadURL  https://github.com/dov-vai/SquigLoader/raw/refs/heads/main/SquigLoader.user.js
+// @require      https://cdn.jsdelivr.net/gh/brainfoolong/cryptojs-aes-php@master/dist/cryptojs-aes-format.js
+// @require      https://cdn.jsdelivr.net/gh/brainfoolong/cryptojs-aes-php@master/dist/cryptojs-aes.min.js
 // ==/UserScript==
 
 (function () {
@@ -207,7 +209,64 @@
       .filter((channel) => channel !== null);
   }
 
+  function extractPathFromUrl(url) {
+    try {
+      const urlObj = new URL(url);
+      return urlObj.pathname.substring(1);
+    } catch (error) {
+      console.error('Error parsing URL:', error);
+      return null;
+    }
+  }
+
+  function fetchHangoutAudio(filePath, channelFiles, fileName) {
+    const encodedPath = encodeURIComponent(filePath);
+    const pass = 'hi_crinacle!';
+
+    return new Promise((resolve, reject) => {
+      GM_xmlhttpRequest({
+        method: 'POST',
+        url: 'https://graph.hangout.audio/d-c.php',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Referer': 'https://graph.hangout.audio/',
+          'Accept-Language': 'en-US,en;q=0.5',
+        },
+        data: `f_p=${encodedPath}&k=${pass}`,
+        onload: function (response) {
+          if (response.status >= 200 && response.status < 300) {
+            try {
+              const result = CryptoJSAesJson.decrypt(
+                response.responseText,
+                pass
+              );
+
+              channelFiles.push(result);
+              resolve();
+            } catch (error) {
+              console.error('Error decrypting data for', fileName, error);
+              reject(error);
+            }
+          } else {
+            reject(new Error(`HTTP error! status: ${response.status}`));
+          }
+        },
+        onerror: function (error) {
+          console.error('Error fetching data via bypass for', fileName, error);
+          reject(error);
+        },
+      });
+    });
+  }
+
   function fetchFile(url, channelFiles, fileName) {
+    if (url.includes('graph.hangout.audio')) {
+      const filePath = extractPathFromUrl(url);
+      if (filePath) {
+        return fetchHangoutAudio(filePath, channelFiles, fileName);
+      }
+    }
+
     return new Promise((resolve, reject) => {
       GM_xmlhttpRequest({
         method: 'GET',
