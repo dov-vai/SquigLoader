@@ -7,7 +7,9 @@
 // @match        https://*.squig.link/*
 // @match        https://graph.hangout.audio/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=squig.link
-// @grant        none
+// @grant        GM_xmlhttpRequest
+// @connect      squig.link
+// @connect      graph.hangout.audio
 // @updateURL    https://github.com/dov-vai/SquigLoader/raw/refs/heads/main/SquigLoader.user.js
 // @downloadURL  https://github.com/dov-vai/SquigLoader/raw/refs/heads/main/SquigLoader.user.js
 // ==/UserScript==
@@ -206,20 +208,24 @@
   }
 
   function fetchFile(url, channelFiles, fileName) {
-    return fetch(url)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.text();
-      })
-      .then((data) => {
-        channelFiles.push(data);
-      })
-      .catch((error) => {
-        console.error('Error fetching data for', fileName, error);
-        throw error;
+    return new Promise((resolve, reject) => {
+      GM_xmlhttpRequest({
+        method: 'GET',
+        url: url,
+        onload: function (response) {
+          if (response.status >= 200 && response.status < 300) {
+            channelFiles.push(response.responseText);
+            resolve();
+          } else {
+            reject(new Error(`HTTP error! status: ${response.status}`));
+          }
+        },
+        onerror: function (error) {
+          console.error('Error fetching data for', fileName, error);
+          reject(error);
+        },
       });
+    });
   }
 
   async function findFilesInPhoneBook(siteUrl, fileName) {
