@@ -263,6 +263,7 @@
     const matchers = {
       'silicagel': (url) => url.replace('/data/', '/data/phones/'),
       '/hana/': (url) => url.replace('/data/', '/data/measurements/'),
+      'doltonius': (url) => url.replace('/data/', '/data/phones/'),
     };
 
     const match = Object.keys(matchers).find((key) => url.includes(key));
